@@ -7,13 +7,13 @@ import random
 from datetime import datetime
 
 def dispatch_request():
-    for i in range(0,25):
+    for i in range(0,10):
         file = open('lista.txt', 'r')
         product = random_line(file).rstrip()
         file.close()
         value = str(random.randint(1, 100)) + ' unidades de ' + product
         data = {'value': value,
-                'tid': str(threading.get_ident())}
+                'pid': str(threading.get_ident())}
         print('Enviando requisição...')
         result = requests.post('http://127.0.0.1:8081/save', params= data)
 
