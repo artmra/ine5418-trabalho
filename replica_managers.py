@@ -34,7 +34,7 @@ class FrontEnd(views.View):
 # Endpoint do Replica Manager
 class Manager(views.View):
     methods = ['POST']
-    update_counter = 0
+    count = {}
 
     def __init__(self, name, nextManagers=[]):
         self.lock = threading.Lock()
@@ -49,17 +49,18 @@ class Manager(views.View):
             tid = request.args.get('tid')
             uid = request.args.get('uid')
             self.saveValue(value=value, date=date, tid=tid, uid=uid)
-            if self.update_counter < 10: return 'ok'
-            for i in self.nextManagers:
-                data = {'value': value,
-                        'date': date,
-                        'tid': tid,
-                        'uid': uid}
-                result = requests.post(i, params= data)
-                if result.content.decode() != 'ok':
-                    self.update_counter = 0
-                    return 'error'
-            self.update_counter = 0
+            if Manager.count.get(self.name, 0) != 5:
+                Manager.count[self.name] = Manager.count.get(self.name, 0) + 1
+            else:
+                Manager.count[self.name] = 0
+                for i in self.nextManagers:
+                    data = {'value': value,
+                            'date': date,
+                            'tid': tid,
+                            'uid': uid}
+                    result = requests.post(i, params= data)
+                    if result.content.decode() != 'ok':
+                        return 'error'
             return 'ok'
 
     # Salva o valor no arquivo
@@ -68,7 +69,6 @@ class Manager(views.View):
         try:
             with open('files/{file}.txt'.format(file=self.name), 'a') as file:
                 file.write('uid: ' + str(uid) + '; ' + 'tid: ' + str(tid) + '; ' + date + ' :- ' + value + '\n')
-            self.update_counter += 1
         finally:
             self.lock.release()
 
