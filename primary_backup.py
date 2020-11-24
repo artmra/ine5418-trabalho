@@ -58,38 +58,28 @@ class Manager(views.View):
                 Manager.backupListLock.acquire()
                 try:
                     Manager.inputsToBackup.append(inputs[0]) # input é adicionado a lista interna para futura atualização
+                    # Checar tamanho da lista, para decidir se os backups devem ou não ser atualizados
+                    if len(Manager.inputsToBackup) > 5: 
+                        # Atualiza cada backup de maneira sequencial
+                        for i in self.nextManagers:
+                            data = {'inputs': Manager.inputsToBackup}
+                            result = requests.post(i, json=json.dumps(data))
+                            # Conforme dito pela professora, não é necessário tratar com os cenários em que a atualização dos backups dá errado
+                            if result.content.decode() != 'ok':
+                                print("Falha ao atualizar arquivo de backup do PM hospedado em " + i)
+                        Manager.inputsToBackup.clear()
                 finally:
                     Manager.backupListLock.release()
-            else:
-                return 'ok'
-            
-            # Checar tamanho da lista, para decidir se os backups devem ou não ser atualizados
-            Manager.backupListLock.acquire()
-            try:
-                if len(Manager.inputsToBackup) > 5:
-                    # Atualiza cada backup de maneira sequencial
-                    for i in self.nextManagers:
-                        data = {'inputs': Manager.inputsToBackup}
-                        result = requests.post(i, json=json.dumps(data))
-                        # Conforme dito pela professora, não é necessário tratar com os cenários em que a atualização dos backups dá errado
-                        if result.content.decode() != 'ok':
-                            print("Falha ao atualizar arquivo de backup do PM hospedado em " + i)
-                    Manager.inputsToBackup.clear()
-                return 'ok'
-            finally:
-                Manager.backupListLock.release()
+            return 'ok'
 
     # Salva o valor no arquivo
     def saveValue(self, inputs):
-        if not self.name == 'primary':
-            print(inputs)
         FILE_LOCKS.get(self.name).acquire()
         try:
             with open('files/{file}.txt'.format(file=self.name), 'a') as file:
                 for i in inputs:
-                    if not self.name == 'primary':
-                        print(i)
                     file.write('uid: ' + str(i['uid']) + '; ' + 'pid: ' + str(i['pid']) + '; ' + i['date'] + ' :- ' + i['value'] + '\n')
+                print("Mensagem salva no arquivo "+self.name+".txt")
         finally:
             FILE_LOCKS.get(self.name).release()
 
