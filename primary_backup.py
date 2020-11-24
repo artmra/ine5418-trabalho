@@ -59,7 +59,7 @@ class Manager(views.View):
                 try:
                     Manager.inputsToBackup.append(inputs[0]) # input é adicionado a lista interna para futura atualização
                     # Checar tamanho da lista, para decidir se os backups devem ou não ser atualizados
-                    if len(Manager.inputsToBackup) > 5: 
+                    if len(Manager.inputsToBackup) == 5: 
                         # Atualiza cada backup de maneira sequencial
                         for i in self.nextManagers:
                             data = {'inputs': Manager.inputsToBackup}
@@ -76,7 +76,7 @@ class Manager(views.View):
     def saveValue(self, inputs):
         FILE_LOCKS.get(self.name).acquire()
         try:
-            with open('files/{file}.txt'.format(file=self.name), 'a') as file:
+            with open('files/{file}/compras.txt'.format(file=self.name), 'a') as file:
                 for i in inputs:
                     file.write('uid: ' + str(i['uid']) + '; ' + 'pid: ' + str(i['pid']) + '; ' + i['date'] + ' :- ' + i['value'] + '\n')
                 print("Mensagem salva no arquivo "+self.name+".txt")
@@ -87,11 +87,15 @@ if __name__ == '__main__':
     # Cria pasta files
     if not os.path.exists('./files'):
         os.makedirs('./files')
+        os.makedirs('./files/primary')
+
     # Liga 3 Secondary Managers nas [5001-5003]
     qnt_secondarys = 3
     base = 5000
     secondarys = []
     for i in range(qnt_secondarys):
+        if not os.path.exists('./files/secondary' + str(i+1)):
+            os.makedirs('./files/secondary' + str(i+1))
         app = Flask('secondary' + str(i + 1))
         app.add_url_rule('/save', view_func=Manager.as_view('myview', 'secondary' + str(i + 1)))
         secondarys.append(base + i + 1)

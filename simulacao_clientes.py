@@ -10,7 +10,7 @@ from datetime import datetime
 # Realiza 10 requests com mensagens aleatórias para algum dos dois frontends
 def dispatch_request():
     # É possivel mudar o numero de requisições aqui
-    for i in range(0,10):
+    for i in range(0,2):
         file = open('lista.txt', 'r')
         product = random_line(file).rstrip()
         file.close()
@@ -22,6 +22,7 @@ def dispatch_request():
 
         if result.content.decode() == 'ok':
             print('Mensagem salva no arquivo. Dê uma olhada!')
+            time.sleep(5)
 
 # Apenas obtem uma linha aleatoria do arquivo usado como base para gerar valores para serem mandados nos requests
 def random_line(afile):
